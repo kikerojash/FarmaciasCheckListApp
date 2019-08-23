@@ -21,14 +21,14 @@ class PreguntasViewModel extends ViewModel {
 
 
     MutableLiveData<String> query = new MutableLiveData<>();
-    LiveData<Resource<List<Instancia>>> instanciaLiveData = getInstanciaLiveData();
+   // LiveData<Resource<List<Instancia>>> instanciaLiveData = getInstanciaLiveData();
 
 
     PreguntasViewModel(PreguntasRepository preguntasRepository) {
         this.preguntasRepository = preguntasRepository;
     }
 
-    LiveData<Resource<List<Instancia>>> getInstanciaLiveData() {
+   /* LiveData<Resource<List<Instancia>>> getInstanciaLiveData() {
         return instanciaLiveData = Transformations.switchMap(query, search -> {
             if (search == null || search.trim().length() == 0) {
                 return AbsentLiveData.create();
@@ -36,7 +36,7 @@ class PreguntasViewModel extends ViewModel {
                 return preguntasRepository.getInstaceListaLiveData(search);
             }
         });
-    }
+    }*/
 
 
     void obtenerData(String dataString) {

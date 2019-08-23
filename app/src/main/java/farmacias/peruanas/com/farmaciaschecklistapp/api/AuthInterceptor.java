@@ -16,7 +16,7 @@ public class AuthInterceptor implements Interceptor {
     private String sessionKey;
 
     AuthInterceptor(String appVersion, String sessionKey) {
-        this.appVersion = appVersion;
+        this.appVersion = "appVersion";
         this.sessionKey = sessionKey;
     }
 

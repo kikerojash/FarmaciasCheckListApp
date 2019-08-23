@@ -12,6 +12,7 @@ class LoginViewModel extends ViewModel {
 
     MutableLiveData<String> validateUsuario = new MutableLiveData<>();
     MutableLiveData<HashMap<String, Object>> onLoginOK = new MutableLiveData<>();
+    MutableLiveData<HashMap<String, Object>> onUserPreferencia = new MutableLiveData<>();
 
     LoginViewModel(LoginRepository repository) {
         this.loginRepository = repository;
@@ -27,6 +28,6 @@ class LoginViewModel extends ViewModel {
             return;
         }
         Timber.d("ingresoDatosCorrectos");
-        loginRepository.initLoginUser(usuario, clave, validateUsuario,onLoginOK);
+        loginRepository.initLoginUser(usuario, clave, validateUsuario,onLoginOK,onUserPreferencia);
     }
 }

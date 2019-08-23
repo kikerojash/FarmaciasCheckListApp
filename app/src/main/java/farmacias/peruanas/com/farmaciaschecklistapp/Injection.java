@@ -11,10 +11,10 @@ import farmacias.peruanas.com.farmaciaschecklistapp.login.service.ChecklistServi
 import farmacias.peruanas.com.farmaciaschecklistapp.login.service.LoginService;
 import farmacias.peruanas.com.farmaciaschecklistapp.login.service.MaestrosService;
 
-//import farmacias.peruanas.com.farmaciaschecklistapp.login.service.RespuestaService;
+import farmacias.peruanas.com.farmaciaschecklistapp.login.service.RespuestaService;
 import farmacias.peruanas.com.farmaciaschecklistapp.main.preguntas.PreguntasFactory;
 import farmacias.peruanas.com.farmaciaschecklistapp.main.preguntas.PreguntasRepository;
-import farmacias.peruanas.com.farmaciaschecklistapp.main.preguntas.service.RespuestaService;
+//import farmacias.peruanas.com.farmaciaschecklistapp.main.preguntas.service.RespuestaService;
 import farmacias.peruanas.com.farmaciaschecklistapp.utils.AppConstants;
 
 public class Injection {
@@ -24,19 +24,20 @@ public class Injection {
         return new LoginFactory(new LoginRepository(CheckListDB.getInstance(context),
                 RetrofitInstance.createService(LoginService.class, AppConstants.BASE_URL, context),
                 RetrofitInstance.createService(ChecklistService.class, AppConstants.BASE_URL, context),
-                RetrofitInstance.createService(MaestrosService.class, AppConstants.BASE_URL, context)
-               // RetrofitInstance.createService(RespuestaService.class, AppConstants.BASE_URL, context)
+                RetrofitInstance.createService(MaestrosService.class, AppConstants.BASE_URL, context),
+                RetrofitInstance.createService(RespuestaService.class, AppConstants.BASE_URL, context)
                 , new AppExecutors()));
     }
 
-
+/*
    public static PreguntasFactory providePreguntasViewModelFactory(Context context) {
         return new PreguntasFactory(new PreguntasRepository(RetrofitInstance
                 .createService(RespuestaService.class,
                         AppConstants.BASE_URL, context),
                 CheckListDB.getInstance(context),
                 new AppExecutors()));
-    }
+    }*/
+
    /* fun provideLoginViewModelFactory(application: Application): LoginFactory {
         return LoginFactory(
                 LoginRepository.getInstance(

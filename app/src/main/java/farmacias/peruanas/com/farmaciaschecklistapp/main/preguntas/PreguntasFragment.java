@@ -50,16 +50,16 @@ public class PreguntasFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-       // preguntasFactory = Injection.providePreguntasViewModelFactory(requireContext());
-    //    preguntasViewModel = new ViewModelProvider(this, preguntasFactory).get(PreguntasViewModel.class);
+        // preguntasFactory = Injection.providePreguntasViewModelFactory(requireContext());
+        //    preguntasViewModel = new ViewModelProvider(this, preguntasFactory).get(PreguntasViewModel.class);
 
-       // initAdapter();
-      //  initViewModel();
+        // initAdapter();
+        //  initViewModel();
     }
 
     private void initViewModel() {
-        preguntasViewModel.obtenerData("obtenerData");
-        preguntasViewModel.getInstanciaLiveData().observe(this, this::getListaCheckList);
+        //    preguntasViewModel.obtenerData("obtenerData");
+        //    preguntasViewModel.getInstanciaLiveData().observe(this, this::getListaCheckList);
 
     }
 

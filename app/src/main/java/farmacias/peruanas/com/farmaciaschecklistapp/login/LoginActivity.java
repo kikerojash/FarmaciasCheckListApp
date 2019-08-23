@@ -86,14 +86,23 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private void initViewModel() {
         loginViewModel.validateUsuario.observeForever(this::mostrarMensaje);
         loginViewModel.onLoginOK.observeForever(this::initStartMainActivity);
+        loginViewModel.onUserPreferencia.observeForever(this::initPreferencias);
+    }
+
+    private void initPreferencias(HashMap<String, Object> stringObjectHashMap) {
+        Usuario usuario = (Usuario) stringObjectHashMap.get("usuario");
+        String sessionKey = (String) stringObjectHashMap.get("sessionKey");
+        securePreferences.createLoginSession(usuario.getLogin(),
+                usuario.getCodEmpresa(),
+                sessionKey);
     }
 
     private void initStartMainActivity(HashMap<String, Object> usuarioStringHashMap) {
         Usuario usuario = (Usuario) usuarioStringHashMap.get("usuario");
         String sessionKey = (String) usuarioStringHashMap.get("sessionKey");
-        securePreferences.createLoginSession(usuario.getLogin(),
+        /*securePreferences.createLoginSession(usuario.getLogin(),
                 usuario.getCodEmpresa(),
-                sessionKey);
+                sessionKey);*/
         if (pd != null && pd.isShowing()) {
             pd.dismiss();
         }

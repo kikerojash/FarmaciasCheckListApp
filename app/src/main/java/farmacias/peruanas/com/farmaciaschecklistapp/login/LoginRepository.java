@@ -1,5 +1,8 @@
 package farmacias.peruanas.com.farmaciaschecklistapp.login;
 
+import android.os.AsyncTask;
+import android.util.Log;
+
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -14,7 +17,7 @@ import farmacias.peruanas.com.farmaciaschecklistapp.login.service.ChecklistServi
 import farmacias.peruanas.com.farmaciaschecklistapp.login.service.LoginResponse;
 import farmacias.peruanas.com.farmaciaschecklistapp.login.service.LoginService;
 import farmacias.peruanas.com.farmaciaschecklistapp.login.service.MaestrosService;
-//import farmacias.peruanas.com.farmaciaschecklistapp.login.service.RespuestaService;
+import farmacias.peruanas.com.farmaciaschecklistapp.login.service.RespuestaService;
 import farmacias.peruanas.com.farmaciaschecklistapp.model.Checklist;
 import farmacias.peruanas.com.farmaciaschecklistapp.model.Instancia;
 import farmacias.peruanas.com.farmaciaschecklistapp.model.Usuario;
@@ -31,32 +34,35 @@ public class LoginRepository {
     private LoginService loginService;
     private ChecklistService checklistService;
     private MaestrosService maestrosService;
-    //private RespuestaService respuestaService;
+    private RespuestaService respuestaService;
     private AppExecutors appExecutors;
 
     public LoginRepository(CheckListDB checkListDB,
                            LoginService service,
                            ChecklistService checklistService,
                            MaestrosService maestrosService,
-                        //  RespuestaService respuestaService,
+                           RespuestaService respuestaService,
                            AppExecutors appExecutors) {
         this.appExecutors = appExecutors;
         this.db = checkListDB;
         this.loginService = service;
         this.checklistService = checklistService;
         this.maestrosService = maestrosService;
-        //this.respuestaService = respuestaService;
+        this.respuestaService = respuestaService;
     }
 
 
-    void initLoginUser(String user, String clave, MutableLiveData<String> validateUsuario, MutableLiveData<HashMap<String, Object>> onLoginOK) {
+    void initLoginUser(String user, String clave,
+                       MutableLiveData<String> validateUsuario,
+                       MutableLiveData<HashMap<String, Object>> onLoginOK,
+                       MutableLiveData<HashMap<String, Object>> onUserPreferencia) {
         String passwordEncriptado = CryptoUtil.encriptarSHA256(clave);
         Usuario usuario1 = new Usuario("0", user, passwordEncriptado, null, null);
         loginService.login(usuario1).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 LoginResponse loginResponse = response.body();
-                if(loginResponse==null){
+                if (loginResponse == null) {
                     validateUsuario.postValue("Errores con nuestros servidores, Contactar con Roy");
                     return;
                 }
@@ -67,6 +73,7 @@ public class LoginRepository {
                     stringHashMap.put("usuario", loginResponse.getUsuario());
                     stringHashMap.put("empresa", validandEmpresa);
                     stringHashMap.put("sessionKey", loginResponse.getSessionKey());
+                    onUserPreferencia.postValue(stringHashMap);
                     appExecutors.networkIO()
                             .execute(() -> {
                                 db.usuarioDao().insertUser(new
@@ -75,11 +82,12 @@ public class LoginRepository {
                                         loginResponse.getUsuario().getClave(),
                                         loginResponse.getSessionKey(),
                                         validandEmpresa));
-                                /*obtenerDataRemote(loginResponse.getSessionKey(),
+                                obtenerDataRemote(loginResponse.getSessionKey(),
                                         validateUsuario,
                                         onLoginOK,
-                                        stringHashMap);*/
-                                onLoginOK.postValue(stringHashMap);
+                                        stringHashMap,
+                                        db);
+                                // onLoginOK.postValue(stringHashMap);
                             });
                 } else {
                     if (response.code() == 401) { // unauthorized
@@ -109,56 +117,82 @@ public class LoginRepository {
     private void obtenerDataRemote(String sessionKey,
                                    MutableLiveData<String> validateUsuario,
                                    MutableLiveData<HashMap<String, Object>> onLoginOK,
-                                   HashMap<String, Object> stringHashMapResult) {
+                                   HashMap<String, Object> stringHashMapResult,
+                                   CheckListDB db) {
 
 
-       /* checklistService.listarChecklists().enqueue(new Callback<List<Checklist>>() {
+        this.respuestaService.obtenerRespuestas().enqueue(new Callback<List<Instancia>>() {
             @Override
-            public void onResponse(Call<List<Checklist>> call, Response<List<Checklist>> response) {
+            public void onResponse(Call<List<Instancia>> call, Response<List<Instancia>> response) {
                 String mensajeError = null;
                 if (response.isSuccessful()) {
-                    try {
-                        guardarChecklistsDB(response.body(), sessionKey, validateUsuario, onLoginOK, stringHashMapResult);
-                    } catch (Exception e) {
-                        mensajeError = e.getLocalizedMessage();
-                        Timber.d("MIFARMA", "error al sincronizar checklists", e);
-                    }
+                    //noinspection unchecked
+                    new GuardarInstanciasTask(validateUsuario, onLoginOK, stringHashMapResult, false, db)
+                            .execute(response.body());
                 } else {
                     mensajeError = response.message();
-                }
-                if (mensajeError != null) {
-                    validateUsuario.postValue(mensajeError + " :ErrorCheckList");
+                    validateUsuario.postValue(mensajeError);
                 }
             }
 
             @Override
-            public void onFailure(Call<List<Checklist>> call, Throwable t) {
-                validateUsuario.postValue(t.getMessage() + "onFailure:ErrorCheckList");
+            public void onFailure(Call<List<Instancia>> call, Throwable t) {
+                validateUsuario.postValue(t.getLocalizedMessage());
             }
-        });*/
-
+        });
     }
 
-    private void guardarChecklistsDB(List<Checklist> checklistList,
-                                     String sessionKey,
-                                     MutableLiveData<String> validateUsuario,
+
+    class GuardarInstanciasTask extends AsyncTask<List<Instancia>, Void, Void> {
+        private boolean actualizar;
+        private MutableLiveData<String> validateUsuario;
+        private MutableLiveData<HashMap<String, Object>> onLoginOK;
+        private HashMap<String, Object> stringHashMapResult;
+        private CheckListDB checkListDB;
+
+        public GuardarInstanciasTask(MutableLiveData<String> validateUsuario,
                                      MutableLiveData<HashMap<String, Object>> onLoginOK,
-                                     HashMap<String, Object> stringHashMapResult) {
+                                     HashMap<String, Object> stringHashMapResult,
+                                     boolean b,
+                                     CheckListDB db) {
+            this.validateUsuario = validateUsuario;
+            this.onLoginOK = onLoginOK;
+            this.stringHashMapResult = stringHashMapResult;
+            this.actualizar = b;
+            this.checkListDB = db;
+        }
+
+
+        @Override
+        protected Void doInBackground(List<Instancia>... params) {
+            try {
+                guardarInstancias(params[0], actualizar, checkListDB);
+            } catch (Exception e) {
+                validateUsuario.postValue(e.getLocalizedMessage());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            /*OpenHelperManager.releaseHelper();
+            this.dbHelper = null;
+            verificarLlamarView(mensajeErrorGuardarInstancias, mensajeErrorChecklists,
+                    mensajeErrorMaestros);*/
+        }
+    }
+
+    private void guardarInstancias(List<Instancia> instanciaList, boolean actualizar, CheckListDB db) {
         try {
-            appExecutors.networkIO()
-                    .execute(() -> {
-                        db.checkListDao().insertAllOrders(checklistList);
-                        onLoginOK.postValue(stringHashMapResult);
-                    });
+            for (Instancia instancia : instanciaList) {
+                Timber.d("instancia : " + instancia.getId());
+            }
         } catch (Exception e) {
-            validateUsuario.postValue(e.getLocalizedMessage() + ":ErrorCheckList");
+            Timber.d("Exception : " + e.getLocalizedMessage());
         }
 
 
     }
 
-  /*  private void obtenerDataRemote(String sessionKey) {
 
-
-    }*/
 }

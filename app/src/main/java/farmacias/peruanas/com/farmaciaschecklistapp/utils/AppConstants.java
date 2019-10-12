@@ -23,5 +23,5 @@ public class AppConstants {
     /**
      * Endpoint
      */
-    public static final String BASE_URL = "http://dev.checklistweb.solucionesfps.pe/";
+    public static final String BASE_URL = "";
 }
